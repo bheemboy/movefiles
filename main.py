@@ -28,8 +28,8 @@ def copy_folder():
 
     try:
         # copy subfolder
-        cmd = f"rsync -r -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}"
-        print (cmd)
+        cmd = f"rsync -r -v {os.path.join(src_path, sub_folder)} {dest_path}"
+        # print (cmd)
         os.system(cmd)
 
         return jsonify({"message": f"{sub_folder} copied successfully to {dest_path}."})
