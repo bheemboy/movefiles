@@ -1,7 +1,8 @@
 import os
 from flask import Flask, render_template, request, jsonify
 
-paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
+# paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
+paths = ["C:\\Temp\\mnt\\dev", "C:\\Temp\\mnt\\qa", "C:\\Temp\\mnt\\released"]
 
 app = Flask(__name__)
 
@@ -14,10 +15,21 @@ def index():
 def get_paths():
     return jsonify(paths)
 
+def get_size(start_path = '.'):
+    total_size = 0
+    for dirpath, dirnames, filenames in os.walk(start_path):
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            # skip if it is symbolic link
+            if not os.path.islink(fp):
+                total_size += os.path.getsize(fp)
+    return round(total_size / (1024 * 1024), 2)
 
 @app.route("/get_subfolders")
 def get_subfolders():
-    return jsonify([os.listdir(path) for path in paths])
+    subfolders = [[[f, get_size(os.path.join(path, f))] for f in os.listdir(path)] for path in paths]
+
+    return jsonify(subfolders)
 
 
 @app.route("/copy_folder")

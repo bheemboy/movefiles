@@ -68,8 +68,8 @@ class MoveFolders {
             
             subfolders[index].forEach(subfolder => {
                 const option = globalThis.document.createElement("option");
-                option.value = subfolder;
-                option.textContent = subfolder;
+                option.value = subfolder[0];
+                option.textContent = `${subfolder[0]} (${subfolder[1]} MB)`;
                 element.appendChild(option);
             });
         });
