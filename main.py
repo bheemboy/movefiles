@@ -28,7 +28,7 @@ def copy_folder():
 
     try:
         # copy subfolder
-        cmd = f"rsync -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}"
+        cmd = f"rsync -r -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}"
         print (cmd)
         os.system(cmd)
 
