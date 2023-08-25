@@ -3,10 +3,10 @@ from sys import platform
 from flask import Flask, render_template, request, jsonify
 
 paths = []
-if platform == "linux" or platform == "linux2":
-    paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
-else:
+if platform == "win32":
     paths = ["C:\\Temp\\mnt\\dev", "C:\\Temp\\mnt\\qa", "C:\\Temp\\mnt\\released"]
+else:
+    paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
 
 app = Flask(__name__)
 
