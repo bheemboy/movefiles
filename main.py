@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify
 
-paths = ["/mnt/tank/dev", "/mnt/tank/qa", "/mnt/tank/released"]
+paths = ["/mnt/tank/dev/ac-preloaded-images", "/mnt/tank/qa/ac-preloaded-images", "/mnt/tank/released/ac-preloaded-images"]
 
 app = Flask(__name__)
 
