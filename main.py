@@ -28,7 +28,9 @@ def copy_folder():
 
     try:
         # copy subfolder
-        os.system(f"rsync -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}")
+        cmd = f"rsync -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}"
+        print (cmd)
+        os.system(cmd)
 
         return jsonify({"message": f"{sub_folder} copied successfully to {dest_path}."})
 
@@ -43,7 +45,9 @@ def delete_folder():
 
     try:
         # delete folder
-        os.system(f"rm -rf {os.path.join(src_path, sub_folder)}")
+        cmd = f"rm -rf {os.path.join(src_path, sub_folder)}"
+        print (cmd)
+        os.system(cmd)
 
         return jsonify({"message": f"{sub_folder} deleted successfully."})
 
