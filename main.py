@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify
 
-paths = ["/mnt/tank/dev/ac-preloaded-images", "/mnt/tank/qa/ac-preloaded-images", "/mnt/tank/released/ac-preloaded-images"]
+paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
 
 app = Flask(__name__)
 
@@ -28,7 +28,7 @@ def copy_folder():
 
     try:
         # copy subfolder
-        os.system(f"robocopy /e {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}")
+        os.system(f"rsync -v {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}")
 
         return jsonify({"message": f"{sub_folder} copied successfully to {dest_path}."})
 
@@ -43,7 +43,7 @@ def delete_folder():
 
     try:
         # delete folder
-        os.system(f"rmdir /S /Q {os.path.join(src_path, sub_folder)}")
+        os.system(f"rm -rf {os.path.join(src_path, sub_folder)}")
 
         return jsonify({"message": f"{sub_folder} deleted successfully."})
 
