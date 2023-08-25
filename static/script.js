@@ -97,11 +97,13 @@ class MoveFolders {
             this.statusMessage.textContent = "Select an item to delete"; 
         }
         else {
-            const delete_folder_response = await fetch(`/delete_folder?src_path=${this.paths[index]}&sub_folder=${sub_folder}`);
-            const msg = await delete_folder_response.json();
+            if (confirm(`Press OK to delete ${sub_folder}`) == true) {
+                const delete_folder_response = await fetch(`/delete_folder?src_path=${this.paths[index]}&sub_folder=${sub_folder}`);
+                const msg = await delete_folder_response.json();
 
-            this.statusMessage.textContent = msg.message;
-            this.get_and_display_subfolders();
+                this.statusMessage.textContent = msg.message;
+                this.get_and_display_subfolders();
+            }
         }
     }
 };
