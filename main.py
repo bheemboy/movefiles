@@ -7,26 +7,16 @@ from flask_socketio import SocketIO, emit
 from threading import Lock
 import time
 
-_lock = Lock()
-_lines = []
 _paths = []
+_lock = Lock()
+_subfolders = []
+_progressLines = []
+_statusMessage = ''
 
 if platform == "win32":
     _paths = ["C:\\Temp\\mnt\\dev", "C:\\Temp\\mnt\\qa", "C:\\Temp\\mnt\\released"]
 else:
     _paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
-
-app = Flask(__name__)
-socketio = SocketIO(app)
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-
-@app.route("/get_paths")
-def get_paths():
-    return jsonify(_paths)
 
 def get_size(start_path = '.'):
     total_size = 0
@@ -38,15 +28,32 @@ def get_size(start_path = '.'):
                 total_size += os.path.getsize(fp)
     return round(total_size / (1024 * 1024), 2)
 
-@app.route("/get_subfolders")
-def get_subfolders():
-    subfolders = [[[f, get_size(os.path.join(path, f))] for f in os.listdir(path)] for path in _paths]
 
-    return jsonify(subfolders)
+def update_subfolders():
+    global _paths, _lock, _subfolders, _progressLines, _statusMessage
+    _subfolders = [[[f, get_size(os.path.join(path, f))] for f in os.listdir(path)] for path in _paths]
+    return
 
+def get_state():
+    global _paths, _lock, _subfolders, _progressLines, _statusMessage
+    return jsonify({"paths": _paths,
+                    "disable_btns": _lock.locked(),
+                    "subfolders": _subfolders,
+                    "statusMessage": _statusMessage,
+                    "progressLines": _progressLines})
+
+####################################################
+
+app = Flask(__name__)
+socketio = SocketIO(app)
+
+@app.route("/")
+def index():
+    return render_template("index.html")
 
 @app.route("/copy_folder")
 def copy_folder():
+    global _paths, _lock, _subfolders, _progressLines, _statusMessage
     _lock.acquire()
     src_path = request.args.get("src_path")
     sub_folder = request.args.get("sub_folder")
@@ -55,26 +62,43 @@ def copy_folder():
     try:
         # copy subfolder
         if platform == "win32":
-            command=f"robocopy /e /np {os.path.join(src_path, sub_folder)} {os.path.join(dest_path, sub_folder)}"
+            command=f'robocopy /e /np "{os.path.join(src_path, sub_folder)}" "{os.path.join(dest_path, sub_folder)}"'
         else:
-            command=f"rsync -r -v {os.path.join(src_path, sub_folder)} {dest_path}"
+            command=f'rsync -r -v "{os.path.join(src_path, sub_folder)}" "{dest_path}"'
+
+        _statusMessage = command
+        _progressLines = []
+        socketio.emit("state", get_state().json, broadcast=True)
         
         proc = Popen(command, shell=True, stdout=PIPE)
+        i = 0
         for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
             msg = msg.replace('\t', '  ').replace('\n', '')
-            socketio.emit("message", msg, broadcast=True)
+            _progressLines.append(msg)
             time.sleep(0.001)
 
-        return jsonify({"message": f"{sub_folder} copied successfully to {dest_path}."})
+            # while copying a folder send status updates every 1 seconds
+            i = i + 1
+            if i == 1000:
+                i = 0
+                update_subfolders()
+                socketio.emit("state", get_state().json, broadcast=True)
+
+        _statusMessage = f"{command}. Done!"
 
     except Exception as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        _statusMessage = f"An error occurred while copying the folder: {str(e)}"
 
     finally:
         _lock.release()
+        update_subfolders()
+    
+    return get_state().json
+
 
 @app.route("/delete_folder")
 def delete_folder():
+    global _paths, _lock, _subfolders, _progressLines, _statusMessage
     _lock.acquire()
     src_path = request.args.get("src_path")
     sub_folder = request.args.get("sub_folder")
@@ -82,34 +106,38 @@ def delete_folder():
     try:
         # delete folder
         if platform == "win32":
-            command = f"rmdir /S /Q {os.path.join(src_path, sub_folder)}"
+            command = f'rmdir /S /Q "{os.path.join(src_path, sub_folder)}"'
         else:
-            command = f"rm -rf {os.path.join(src_path, sub_folder)}"
+            command = f'rm -rf "{os.path.join(src_path, sub_folder)}"'
+
+        _statusMessage = command
+        _progressLines = []
+        socketio.emit("state", get_state().json, broadcast=True)
 
         proc = Popen(command, shell=True, stdout=PIPE)
         for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
             msg = msg.replace('\t', '  ').replace('\n', '')
-            socketio.emit("message", msg, broadcast=True)
+            _progressLines.append(msg)
             time.sleep(0.001)
 
-        return jsonify({"message": f"{sub_folder} deleted successfully."})
+        _statusMessage = f"{command}. Done!"
 
     except Exception as e:
-        return jsonify({"message": f"An error occurred: {str(e)}"}), 500
+        _statusMessage = f"An error occurred: {str(e)}"
 
     finally:
         _lock.release()
+        update_subfolders()
+    
+    return get_state().json
 
 
 @socketio.on("connect")
 def connect():
     print("socket connected")
-
-@socketio.on('message')
-def handle_message(data):
-    print('message received: ' + data)
+    update_subfolders()
+    socketio.emit("state", get_state().json, broadcast=True)
 
 
 if __name__ == "__main__":
     socketio.run(app, host='0.0.0.0', port=5000, debug=False)
-    # socketio.run(app)
