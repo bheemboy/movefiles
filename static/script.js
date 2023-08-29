@@ -24,6 +24,7 @@ class MoveFolders {
         this.delButtons[2] = globalThis.document.getElementById("deleteReleasedButton");
 
         this.statusMessage = globalThis.document.getElementById("statusMessage");
+        this.progressMessage = globalThis.document.getElementById("progressMessage");
 
         // bind events
         const _movefolder = this;
@@ -45,6 +46,22 @@ class MoveFolders {
                 _movefolder.delete_selected_item(index);
             });
         });
+
+        this.socket = io();
+        this.socket.on('connect', function() {
+            console.log('socket connected');
+            // _movefolder.socket.emit('my event', {data: 'I\'m connected!'});
+        });
+
+        this.socket.on('message', function(msg) {
+            // console.log(msg);
+            // _movefolder.progressMessage.innerHTML += msg + "<br /";
+            var item = globalThis.document.createElement('li');
+            item.textContent = msg;
+            _movefolder.progressMessage.appendChild(item);
+            window.scrollTo(0, globalThis.document.body.scrollHeight);
+          });
+
     }
 
     // get and display root paths
@@ -82,6 +99,7 @@ class MoveFolders {
             this.statusMessage.textContent = "Select an item to copy"; 
         }
         else {
+            this.progressMessage.innerHTML = "";
             const copy_folder_response = await fetch(`/copy_folder?src_path=${this.paths[from]}&sub_folder=${sub_folder}&dest_path=${this.paths[to]}`);
             const msg = await copy_folder_response.json();
 
@@ -98,6 +116,7 @@ class MoveFolders {
         }
         else {
             if (confirm(`Press OK to delete ${sub_folder}`) == true) {
+                this.progressMessage.innerHTML = "";
                 const delete_folder_response = await fetch(`/delete_folder?src_path=${this.paths[index]}&sub_folder=${sub_folder}`);
                 const msg = await delete_folder_response.json();
 
