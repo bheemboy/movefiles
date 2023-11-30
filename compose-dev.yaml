@@ -1,0 +1,10 @@
+services:
+  web: 
+    build:
+      context: app
+      target: dev-envs
+    stop_signal: SIGINT
+    ports: 
+      - '5000:5000'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
