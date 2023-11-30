@@ -1,4 +1,4 @@
-import os, io
+import os, io, shutil
 from subprocess import Popen, PIPE
 import time
 from sys import platform
@@ -61,30 +61,25 @@ def copy_folder():
 
     try:
         # copy subfolder
-        if platform == "win32":
-            command=f'robocopy /e /np "{os.path.join(src_path, sub_folder)}" "{os.path.join(dest_path, sub_folder)}"'
-        else:
-            command=f'rsync -r -v "{os.path.join(src_path, sub_folder)}" "{dest_path}"'
+        shutil.copytree(os.path.join(src_path, sub_folder), os.path.join(dest_path, sub_folder))
 
-        _statusMessage = command
+        _statusMessage = f"Copying {os.path.join(src_path, sub_folder)} to {dest_path}"
         _progressLines = []
         socketio.emit("state", get_state().json, broadcast=True)
-        
-        proc = Popen(command, shell=True, stdout=PIPE)
-        i = 0
-        for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-            msg = msg.replace('\t', '  ').replace('\n', '')
-            _progressLines.append(msg)
-            time.sleep(0.001)
+                
+        # proc = Popen(command, shell=True, stdout=PIPE)
+        # i = 0
+        # for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
+        #     msg = msg.replace('\t', '  ').replace('\n', '')
+        #     _progressLines.append(msg)
+        #     time.sleep(0.001)
 
-            # while copying a folder send status updates every 1 seconds
-            i = i + 1
-            if i == 1000:
-                i = 0
-                update_subfolders()
-                socketio.emit("state", get_state().json, broadcast=True)
-
-        _statusMessage = f"{command}. Done!"
+        #     # while copying a folder send status updates every 1 seconds
+        #     i = i + 1
+        #     if i == 1000:
+        #         i = 0
+        #         update_subfolders()
+        #         socketio.emit("state", get_state().json, broadcast=True)
 
     except Exception as e:
         _statusMessage = f"An error occurred while copying the folder: {str(e)}"
