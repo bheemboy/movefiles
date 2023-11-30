@@ -1,11 +1,9 @@
-import os, io, shutil
+import os, shutil
 from subprocess import Popen, PIPE
-import time
 from sys import platform
 from flask import Flask, render_template, request, jsonify
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 from threading import Lock
-import time
 
 _paths = []
 _lock = Lock()
@@ -61,45 +59,32 @@ def copy_folder():
     
     def _copy_function (src, dst):
         global _progressLines
-        _progressLines.append(f"Copying {src} [{os.path.getsize(src)} bytes]...")
+        _progressLines.append(f'Copying "{src}" [{round(os.path.getsize(src) / (1024 * 1024), 2)} MB]...')
         socketio.emit("state", get_state().json, broadcast=True)
         retval = shutil.copy2(src, dst)
         update_subfolders()
-        _progressLines.pop()
-        _progressLines.append(f"Copying {src} [{os.path.getsize(src)}]...done.")
+        
+        _progressLines.append(_progressLines.pop() + "done.")
         socketio.emit("state", get_state().json, broadcast=True)
         return retval
         
     try:
         # copy subfolder
         _progressLines = []
-        _statusMessage = f"Copying {os.path.join(src_path, sub_folder)} to {dest_path}"
+        _statusMessage = f'Copying "{os.path.join(src_path, sub_folder)}" to "{dest_path}"...'
         socketio.emit("state", get_state().json, broadcast=True)
         shutil.copytree(os.path.join(src_path, sub_folder), 
                         os.path.join(dest_path, sub_folder), 
                         copy_function= _copy_function)
-
-                
-        # proc = Popen(command, shell=True, stdout=PIPE)
-        # i = 0
-        # for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-        #     msg = msg.replace('\t', '  ').replace('\n', '')
-        #     _progressLines.append(msg)
-        #     time.sleep(0.001)
-
-        #     # while copying a folder send status updates every 1 seconds
-        #     i = i + 1
-        #     if i == 1000:
-        #         i = 0
-        #         update_subfolders()
-        #         socketio.emit("state", get_state().json, broadcast=True)
+        _statusMessage = _statusMessage + f"  done."
 
     except Exception as e:
-        _statusMessage = f"An error occurred while copying the folder: {str(e)}"
+        _statusMessage = f'An error occurred while copying "{os.path.join(src_path, sub_folder)}": {str(e)}'
 
     finally:
         _lock.release()
         update_subfolders()
+        socketio.emit("state", get_state().json, broadcast=True)
     
     return get_state().json
 
@@ -112,30 +97,22 @@ def delete_folder():
     sub_folder = request.args.get("sub_folder")
 
     try:
-        # delete folder
-        if platform == "win32":
-            command = f'rmdir /S /Q "{os.path.join(src_path, sub_folder)}"'
-        else:
-            command = f'rm -rf "{os.path.join(src_path, sub_folder)}"'
-
-        _statusMessage = command
+        _statusMessage = f'Deleting "{os.path.join(src_path, sub_folder)}"...'
         _progressLines = []
         socketio.emit("state", get_state().json, broadcast=True)
 
-        proc = Popen(command, shell=True, stdout=PIPE)
-        for msg in io.TextIOWrapper(proc.stdout, encoding="utf-8"):  # or another encoding
-            msg = msg.replace('\t', '  ').replace('\n', '')
-            _progressLines.append(msg)
-            time.sleep(0.001)
+        # delete folder
+        shutil.rmtree(os.path.join(src_path, sub_folder))
 
-        _statusMessage = f"{command}. Done!"
+        _statusMessage = _statusMessage + f"  Done."
 
     except Exception as e:
-        _statusMessage = f"An error occurred: {str(e)}"
+        _statusMessage = f'An error occurred while deleting "{os.path.join(src_path, sub_folder)}": {str(e)}'
 
     finally:
         _lock.release()
         update_subfolders()
+        socketio.emit("state", get_state().json, broadcast=True)
     
     return get_state().json
 
