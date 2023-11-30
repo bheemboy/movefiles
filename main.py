@@ -1,4 +1,4 @@
-import os
+import os, shutil
 from sys import platform
 from flask import Flask, render_template, request, jsonify
 
@@ -44,10 +44,7 @@ def copy_folder():
 
     try:
         # copy subfolder
-        cmd = f"rsync -r -v {os.path.join(src_path, sub_folder)} {dest_path}"
-        # print (cmd)
-        os.system(cmd)
-
+        shutil.copytree(os.path.join(src_path, sub_folder), os.path.join(dest_path, sub_folder))
         return jsonify({"message": f"{sub_folder} copied successfully to {dest_path}."})
 
     except Exception as e:
@@ -61,10 +58,7 @@ def delete_folder():
 
     try:
         # delete folder
-        cmd = f"rm -rf {os.path.join(src_path, sub_folder)}"
-        print (cmd)
-        os.system(cmd)
-
+        shutil.rmtree(os.path.join(src_path, sub_folder))
         return jsonify({"message": f"{sub_folder} deleted successfully."})
 
     except Exception as e:
