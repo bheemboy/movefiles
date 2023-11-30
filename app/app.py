@@ -1,6 +1,4 @@
 import os, shutil
-from subprocess import Popen, PIPE
-from sys import platform
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from threading import Lock
@@ -10,11 +8,7 @@ _lock = Lock()
 _subfolders = []
 _progressLines = []
 _statusMessage = ''
-
-if platform == "win32":
-    _paths = ["C:\\Temp\\mnt\\dev", "C:\\Temp\\mnt\\qa", "C:\\Temp\\mnt\\released"]
-else:
-    _paths = ["/mnt/tank/dev/images/lenovo", "/mnt/tank/qa/images/lenovo", "/mnt/tank/released/images/lenovo"]
+_paths = ["/mnt/dev", "/mnt/qa", "/mnt/released"]
 
 def get_size(start_path = '.'):
     total_size = 0
@@ -125,4 +119,4 @@ def connect():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=5000, debug=False)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=False, allow_unsafe_werkzeug=True)

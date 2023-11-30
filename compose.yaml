@@ -8,4 +8,7 @@ services:
     stop_signal: SIGINT
     ports:
       - '5000:5000'
-  
+    volumes:
+      - C:\Temp\mnt\dev:/mnt/dev
+      - C:\Temp\mnt\qa:/mnt/qa
+      - C:\Temp\mnt\released:/mnt/released
