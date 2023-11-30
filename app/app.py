@@ -3,12 +3,11 @@ from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
 from threading import Lock
 
-_paths = []
+_paths = ["/mnt/dev", "/mnt/qa", "/mnt/released"]
 _lock = Lock()
 _subfolders = []
 _progressLines = []
 _statusMessage = ''
-_paths = ["/mnt/dev", "/mnt/qa", "/mnt/released"]
 
 def get_size(start_path = '.'):
     total_size = 0
