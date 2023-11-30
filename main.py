@@ -58,14 +58,27 @@ def copy_folder():
     src_path = request.args.get("src_path")
     sub_folder = request.args.get("sub_folder")
     dest_path = request.args.get("dest_path")
-
+    
+    def _copy_function (src, dst):
+        global _progressLines
+        _progressLines.append(f"Copying {src} [{os.path.getsize(src)} bytes]...")
+        socketio.emit("state", get_state().json, broadcast=True)
+        retval = shutil.copy2(src, dst)
+        update_subfolders()
+        _progressLines.pop()
+        _progressLines.append(f"Copying {src} [{os.path.getsize(src)}]...done.")
+        socketio.emit("state", get_state().json, broadcast=True)
+        return retval
+        
     try:
         # copy subfolder
-        shutil.copytree(os.path.join(src_path, sub_folder), os.path.join(dest_path, sub_folder))
-
-        _statusMessage = f"Copying {os.path.join(src_path, sub_folder)} to {dest_path}"
         _progressLines = []
+        _statusMessage = f"Copying {os.path.join(src_path, sub_folder)} to {dest_path}"
         socketio.emit("state", get_state().json, broadcast=True)
+        shutil.copytree(os.path.join(src_path, sub_folder), 
+                        os.path.join(dest_path, sub_folder), 
+                        copy_function= _copy_function)
+
                 
         # proc = Popen(command, shell=True, stdout=PIPE)
         # i = 0
