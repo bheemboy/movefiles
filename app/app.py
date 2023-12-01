@@ -4,7 +4,7 @@ from flask_socketio import SocketIO
 from threading import Lock
 
 _paths = ["/mnt/tank/dev/images/lenovo", 
-          "/mnt/tank/qa/images/lenovo"
+          "/mnt/tank/qa/images/lenovo",
           "/mnt/tank/released/images/lenovo"]
 _lock = Lock()
 _subfolders = []
