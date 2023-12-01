@@ -70,7 +70,8 @@ def copy_folder():
         socketio.emit("state", get_state().json, broadcast=True)
         shutil.copytree(os.path.join(src_path, sub_folder), 
                         os.path.join(dest_path, sub_folder), 
-                        copy_function= _copy_function)
+                        copy_function= _copy_function,
+                        dirs_exist_ok=True)
         _statusMessage = _statusMessage + f"  done."
 
     except Exception as e:
