@@ -40,9 +40,16 @@ def get_state():
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    return render_template("index.html")
+    if request.method == "GET":
+        return render_template("password.html")
+    else:
+        if request.form['password'] == 'movefiles':
+            return render_template("index.html")
+        else:
+            return render_template("password.html")
+
 
 @app.route("/copy_folder")
 def copy_folder():
